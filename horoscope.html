@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#160F2E" />
+<title>นพเคราะห์ — เครื่องมือดูดวงร่วมสมัย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Trirong:ital,wght@0,300;0,500;0,600;1,400&family=Sarabun:wght@300;400;500;600&family=Cormorant:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#160F2E;        /* กรมท่าอมม่วง ราตรี */
+    --ink-2:#1F1640;
+    --ink-3:#2A1E54;
+    --gold:#D8B863;       /* ทองเก่า */
+    --gold-soft:#E7D29A;
+    --gold-dim:#8C7536;
+    --oxblood:#7A2E2E;    /* แดงลาดเลือดหมู */
+    --oxblood-bright:#B84A4A;
+    --moon:#EFE7D2;       /* แสงจันทร์ / ใบลาน */
+    --moon-dim:#B7AE9B;
+    --teal:#1E3A3A;
+    --line:rgba(216,184,99,.22);
+    --line-soft:rgba(216,184,99,.12);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  html{scroll-behavior:smooth}
+
+  body{
+    font-family:'Sarabun',sans-serif;
+    background:var(--ink);
+    color:var(--moon);
+    line-height:1.7;
+    overflow-x:hidden;
+    position:relative;
+    min-height:100vh;
+  }
+
+  /* ---------- พื้นหลังดาว ---------- */
+  #starfield{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(122,46,46,.18), transparent 60%),
+      radial-gradient(ellipse 120% 80% at 50% 120%, rgba(30,58,58,.35), transparent 55%),
+      radial-gradient(circle at 50% 40%, transparent 40%, rgba(10,6,22,.55) 100%);
+  }
+
+  .wrap{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+
+  /* ---------- หัวเรื่อง / hero ---------- */
+  header.hero{
+    min-height:100vh;
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:max(64px,calc(48px + env(safe-area-inset-top))) 0 48px;
+    position:relative;
+  }
+
+  .eyebrow{
+    font-family:'Cormorant',serif;
+    font-style:italic;
+    letter-spacing:.42em;
+    text-transform:uppercase;
+    font-size:.82rem;
+    color:var(--gold);
+    opacity:0;
+    animation:fadeUp 1.1s .2s forwards;
+  }
+  .eyebrow::before,.eyebrow::after{
+    content:"";display:inline-block;width:34px;height:1px;
+    background:var(--gold);vertical-align:middle;margin:0 16px;opacity:.6;
+  }
+
+  h1.title{
+    font-family:'Trirong',serif;
+    font-weight:500;
+    font-size:clamp(2.6rem,7vw,5.4rem);
+    line-height:1.05;
+    color:var(--moon);
+    margin:18px 0 6px;
+    letter-spacing:.01em;
+    opacity:0;
+    animation:fadeUp 1.1s .45s forwards;
+  }
+  h1.title .accent{color:var(--gold);font-style:italic;font-weight:400}
+
+  .subtitle{
+    max-width:540px;
+    color:var(--moon-dim);
+    font-size:1.02rem;
+    font-weight:300;
+    margin:6px auto 0;
+    opacity:0;
+    animation:fadeUp 1.1s .7s forwards;
+  }
+
+  /* ---------- วงล้อ astrolabe ---------- */
+  .astrolabe-stage{
+    position:relative;
+    width:min(74vw,360px);
+    height:min(74vw,360px);
+    margin:42px auto 8px;
+    opacity:0;
+    animation:fadeIn 1.6s .9s forwards;
+  }
+  .astrolabe-stage svg{width:100%;height:100%;overflow:visible}
+  .ring-outer{animation:spin 120s linear infinite}
+  .ring-inner{animation:spin 90s linear infinite reverse}
+  .ring-mid{animation:spin 200s linear infinite}
+  .glyph{fill:var(--gold);font-family:'Cormorant',serif}
+  .glyph-th{fill:var(--moon-dim);font-family:'Trirong',serif}
+
+  .scroll-cue{
+    margin-top:30px;
+    font-family:'Cormorant',serif;
+    font-style:italic;
+    letter-spacing:.3em;
+    text-transform:uppercase;
+    font-size:.72rem;
+    color:var(--gold-dim);
+    opacity:0;
+    animation:fadeUp 1.1s 1.3s forwards, floaty 2.6s 2.4s ease-in-out infinite;
+  }
+
+  /* ---------- ส่วนเลือก ---------- */
+  section{padding:60px 0}
+  .section-head{text-align:center;margin-bottom:36px}
+  .section-num{
+    font-family:'Cormorant',serif;font-style:italic;color:var(--gold);
+    letter-spacing:.3em;font-size:.8rem;text-transform:uppercase;
+  }
+  .section-head h2{
+    font-family:'Trirong',serif;font-weight:500;
+    font-size:clamp(1.6rem,4vw,2.4rem);color:var(--moon);margin-top:6px;
+  }
+  .section-head p{color:var(--moon-dim);font-weight:300;max-width:440px;margin:8px auto 0}
+
+  /* การ์ดราศี */
+  .zodiac-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
+    gap:12px;
+  }
+  .z-card{
+    position:relative;
+    background:linear-gradient(160deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line-soft);
+    border-radius:2px;
+    padding:18px 14px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .35s,box-shadow .35s;
+    overflow:hidden;
+  }
+  .z-card::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 0%,rgba(216,184,99,.14),transparent 70%);
+    opacity:0;transition:opacity .35s;
+  }
+  .z-card:hover{transform:translateY(-4px);border-color:var(--line);box-shadow:0 14px 40px -22px rgba(216,184,99,.5)}
+  .z-card:hover::after{opacity:1}
+  .z-card.active{
+    border-color:var(--gold);
+    box-shadow:0 0 0 1px var(--gold),0 16px 44px -20px rgba(216,184,99,.6);
+  }
+  .z-card.active::after{opacity:1}
+  .z-glyph{font-family:'Cormorant',serif;font-size:2rem;color:var(--gold);line-height:1}
+  .z-th{font-family:'Trirong',serif;font-size:1.15rem;color:var(--moon);margin-top:6px}
+  .z-en{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--moon-dim);margin-top:2px}
+  .z-date{font-size:.7rem;color:var(--gold-dim);margin-top:6px}
+
+  /* แถวควบคุม */
+  .controls{
+    display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-end;
+    margin-top:40px;
+  }
+  .ctl{display:flex;flex-direction:column;gap:10px}
+  .ctl-label{
+    font-family:'Cormorant',serif;font-style:italic;letter-spacing:.22em;
+    text-transform:uppercase;font-size:.72rem;color:var(--gold);text-align:center;
+  }
+  .period-tabs{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .period-tabs button{
+    font-family:'Sarabun',sans-serif;font-size:.92rem;
+    background:transparent;color:var(--moon-dim);border:0;
+    padding:11px 20px;cursor:pointer;transition:.3s;border-right:1px solid var(--line-soft);
+  }
+  .period-tabs button:last-child{border-right:0}
+  .period-tabs button.active{background:var(--gold);color:var(--ink);font-weight:600}
+  .period-tabs button:hover:not(.active){color:var(--moon);background:rgba(216,184,99,.08)}
+
+  .year-input{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:2px}
+  .year-input input{
+    width:120px;background:transparent;border:0;color:var(--moon);
+    font-family:'Sarabun',sans-serif;font-size:1rem;padding:11px 14px;text-align:center;outline:none;
+  }
+  .year-input input::placeholder{color:var(--moon-dim)}
+  .era-toggle{
+    background:rgba(216,184,99,.08);border:0;border-left:1px solid var(--line-soft);
+    color:var(--gold);font-family:'Sarabun';font-size:.82rem;padding:11px 12px;cursor:pointer;transition:.3s;
+  }
+  .era-toggle:hover{background:rgba(216,184,99,.18)}
+
+  .reveal-btn{
+    margin:44px auto 0;display:block;
+    font-family:'Trirong',serif;font-size:1.05rem;font-weight:500;letter-spacing:.04em;
+    background:linear-gradient(135deg,var(--oxblood),var(--oxblood-bright));
+    color:var(--moon);border:1px solid var(--gold);
+    padding:15px 46px;border-radius:2px;cursor:pointer;
+    transition:transform .3s,box-shadow .3s,opacity .3s;
+    box-shadow:0 14px 40px -18px rgba(184,74,74,.7);
+    position:relative;overflow:hidden;
+  }
+  .reveal-btn:hover{transform:translateY(-2px);box-shadow:0 20px 50px -18px rgba(216,184,99,.6)}
+  .reveal-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+  .reveal-btn::before{
+    content:"✦";margin-right:10px;color:var(--gold-soft);
+  }
+
+  /* ---------- ผลทำนาย ---------- */
+  #result{display:none;scroll-margin-top:20px}
+  #result.show{display:block;animation:fadeUp .9s forwards}
+
+  .result-head{text-align:center;margin-bottom:8px}
+  .result-head .pickline{
+    font-family:'Cormorant',serif;font-style:italic;color:var(--gold);
+    letter-spacing:.2em;text-transform:uppercase;font-size:.78rem;
+  }
+  .result-head h2{
+    font-family:'Trirong',serif;font-weight:500;font-size:clamp(1.8rem,5vw,3rem);
+    color:var(--moon);margin:6px 0;
+  }
+  .result-head .nak{color:var(--gold);font-size:1rem;font-weight:300}
+  .result-date{color:var(--moon-dim);font-size:.86rem}
+
+  .verdict{
+    border:1px solid var(--line);border-radius:2px;
+    background:linear-gradient(160deg,var(--ink-2),rgba(31,22,64,.4));
+    padding:28px 30px;margin:30px 0;position:relative;
+  }
+  .verdict::before{
+    content:"❝";position:absolute;top:6px;left:14px;font-size:3rem;color:var(--gold-dim);
+    font-family:'Cormorant',serif;opacity:.4;
+  }
+  .verdict .lead{font-family:'Trirong',serif;font-size:1.22rem;font-weight:400;color:var(--moon);font-style:italic;line-height:1.6}
+  .verdict .body{margin-top:14px;color:var(--moon-dim);font-weight:300}
+
+  /* ภาพรวมพลังดาว */
+  .planet-row{
+    display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin:22px 0 6px;
+  }
+  .planet-chip{
+    border:1px solid var(--line-soft);border-radius:2px;padding:8px 16px;
+    font-size:.86rem;color:var(--moon-dim);background:rgba(216,184,99,.04);
+  }
+  .planet-chip b{color:var(--gold);font-weight:600}
+
+  /* การ์ดด้านต่างๆ */
+  .aspect-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:8px;
+  }
+  .aspect{
+    border:1px solid var(--line-soft);border-radius:2px;padding:22px 22px 24px;
+    background:linear-gradient(165deg,rgba(31,22,64,.55),rgba(22,15,46,.2));
+  }
+  .aspect-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .aspect-name{font-family:'Trirong',serif;font-size:1.15rem;color:var(--moon)}
+  .aspect-icon{font-size:1.2rem}
+  .stars{letter-spacing:3px;font-size:.95rem;color:var(--gold)}
+  .stars .dim{color:var(--gold-dim);opacity:.45}
+  .aspect p{color:var(--moon-dim);font-weight:300;font-size:.95rem}
+
+  .bar{height:4px;background:rgba(216,184,99,.12);border-radius:2px;margin:14px 0 4px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--oxblood-bright),var(--gold));transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+
+  /* เลขนำโชค */
+  .lucky-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:26px;
+  }
+  .lucky{
+    text-align:center;border:1px solid var(--line-soft);border-radius:2px;padding:20px 14px;
+    background:radial-gradient(circle at 50% 0%,rgba(216,184,99,.08),transparent 70%);
+  }
+  .lucky .l-lab{font-family:'Cormorant',serif;font-style:italic;letter-spacing:.2em;text-transform:uppercase;font-size:.68rem;color:var(--gold-dim)}
+  .lucky .l-val{font-family:'Trirong',serif;font-size:1.5rem;color:var(--gold);margin-top:8px}
+  .lucky .l-sub{font-size:.78rem;color:var(--moon-dim);margin-top:2px}
+  .swatch{width:26px;height:26px;border-radius:50%;margin:8px auto 0;border:1px solid rgba(255,255,255,.25)}
+
+  .advice{
+    margin-top:30px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
+    padding:24px 6px;text-align:center;
+  }
+  .advice .a-lab{font-family:'Cormorant',serif;font-style:italic;letter-spacing:.24em;text-transform:uppercase;font-size:.74rem;color:var(--gold)}
+  .advice .a-text{font-family:'Trirong',serif;font-size:1.18rem;color:var(--moon);margin-top:10px;font-style:italic}
+
+  .traditions{margin-top:26px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .trad{font-size:.74rem;color:var(--moon-dim);border:1px solid var(--line-soft);border-radius:20px;padding:5px 14px}
+  .trad b{color:var(--gold)}
+
+  .recast{
+    margin:36px auto 0;display:block;background:transparent;border:1px solid var(--line);
+    color:var(--gold);font-family:'Trirong',serif;font-size:.98rem;padding:12px 32px;
+    border-radius:2px;cursor:pointer;transition:.3s;
+  }
+  .recast:hover{background:rgba(216,184,99,.08);border-color:var(--gold)}
+
+  footer{
+    text-align:center;padding:50px 24px max(60px,calc(50px + env(safe-area-inset-bottom)));
+    color:var(--moon-dim);font-size:.78rem;font-weight:300;
+    border-top:1px solid var(--line-soft);margin-top:40px;
+  }
+  footer .glyphline{color:var(--gold-dim);letter-spacing:.6em;margin-bottom:14px;font-size:.9rem}
+
+  /* ---------- animations ---------- */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;scroll-behavior:auto!important;transition:none!important}
+    .eyebrow,h1.title,.subtitle,.astrolabe-stage,.scroll-cue,#result.show{opacity:1!important;transform:none!important}
+  }
+
+  /* ========== RESPONSIVE BREAKPOINTS ========== */
+
+  /* Tablet landscape & small desktop (≤1024px) */
+  @media(max-width:1024px){
+    .wrap{padding:0 20px}
+    .aspect-grid{grid-template-columns:repeat(2,1fr)}
+    .lucky-grid{grid-template-columns:repeat(2,1fr)}
+  }
+
+  /* Tablet portrait – iPad (≤768px) */
+  @media(max-width:768px){
+    .wrap{padding:0 18px}
+    header.hero{padding:48px 0 36px;min-height:100svh}
+    .astrolabe-stage{
+      width:min(65vw,280px);
+      height:min(65vw,280px);
+      margin:32px auto 6px;
+    }
+    .zodiac-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+    .z-glyph{font-size:1.7rem}
+    .z-th{font-size:1rem}
+    .z-card{padding:14px 10px 12px}
+    .controls{flex-direction:column;align-items:center;gap:20px}
+    .period-tabs button{padding:10px 14px;font-size:.86rem}
+    .aspect-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+    .lucky-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+    .verdict{padding:24px 20px}
+    section{padding:44px 0}
+    .result-head h2{font-size:clamp(1.5rem,5vw,2.2rem)}
+    .planet-row{gap:10px}
+    .planet-chip{font-size:.8rem;padding:7px 12px}
+  }
+
+  /* Mobile (≤560px) – iPhone & Android phones */
+  @media(max-width:560px){
+    .wrap{padding:0 16px}
+    header.hero{padding:40px 0 30px;min-height:100svh}
+
+    .eyebrow{font-size:.72rem;letter-spacing:.28em}
+    .eyebrow::before,.eyebrow::after{width:20px;margin:0 10px}
+
+    .astrolabe-stage{
+      width:min(80vw,260px);
+      height:min(80vw,260px);
+      margin:28px auto 4px;
+    }
+    .subtitle{font-size:.94rem;padding:0 8px}
+    .scroll-cue{font-size:.68rem;margin-top:22px}
+
+    /* ราศีกริด: 3 columns on small phones, 4 on wider phones */
+    .zodiac-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+    .z-card{padding:12px 8px 10px}
+    .z-glyph{font-size:1.5rem}
+    .z-th{font-size:.92rem;margin-top:4px}
+    .z-en{font-size:.62rem}
+    .z-date{font-size:.62rem;margin-top:4px}
+
+    .controls{flex-direction:column;align-items:stretch;gap:18px;margin-top:28px}
+    .ctl{align-items:center}
+    .period-tabs{width:100%}
+    .period-tabs button{flex:1;padding:10px 8px;font-size:.82rem}
+    .year-input{width:100%}
+    .year-input input{flex:1;width:auto}
+
+    .reveal-btn{padding:14px 32px;font-size:.98rem;margin-top:32px}
+
+    section{padding:36px 0}
+    .section-head{margin-bottom:26px}
+
+    .verdict{padding:20px 16px}
+    .verdict .lead{font-size:1.08rem}
+    .verdict::before{font-size:2.2rem;top:4px;left:10px}
+
+    .planet-row{gap:8px}
+    .planet-chip{font-size:.76rem;padding:6px 10px}
+
+    .aspect-grid{grid-template-columns:1fr;gap:10px}
+    .aspect{padding:18px 16px 20px}
+
+    .lucky-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .lucky{padding:16px 10px}
+    .lucky .l-val{font-size:1.25rem}
+
+    .advice .a-text{font-size:1.05rem}
+
+    .recast{padding:11px 24px;font-size:.92rem}
+
+    footer{padding:36px 16px 50px}
+  }
+
+  /* Extra small – iPhone SE, small Androids (≤375px) */
+  @media(max-width:375px){
+    .zodiac-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+    .z-card{padding:10px 6px 9px}
+    .z-glyph{font-size:1.35rem}
+    .z-th{font-size:.84rem}
+    .period-tabs button{padding:9px 5px;font-size:.78rem}
+    .lucky-grid{grid-template-columns:repeat(2,1fr)}
+  }
+
+  /* Touch: ปรับ tap target ให้ง่ายขึ้น */
+  @media(hover:none) and (pointer:coarse){
+    .z-card:hover{transform:none;border-color:var(--line-soft);box-shadow:none}
+    .z-card:active{transform:scale(.97);border-color:var(--line)}
+    .z-card.active{border-color:var(--gold)}
+    .period-tabs button{min-height:44px}
+    .era-toggle{min-height:44px;min-width:44px}
+    .reveal-btn{min-height:52px}
+    .recast{min-height:44px}
+  }
+
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="vignette"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Celestial Almanac · ฉบับร่วมสมัย</div>
+    <h1 class="title">นพ<span class="accent">เคราะห์</span></h1>
+    <p class="subtitle">เครื่องมืออ่านดวงชะตา ผูกตำแหน่งดาวกับ <em>ราศี</em> และ <em>นักษัตร</em> ของคุณ — ประสานความเชื่อหลายสำนักไว้ในวงล้อเดียว</p>
+
+    <div class="astrolabe-stage" id="astrolabe"></div>
+
+    <div class="scroll-cue">เลื่อนลงเพื่อเปิดดวง ▾</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="choose">
+    <div class="section-head">
+      <div class="section-num">I · เลือกราศี</div>
+      <h2>คุณคือราศีใด</h2>
+      <p>ราศีกำหนดจากตำแหน่งดวงอาทิตย์ในวันเกิด แตะเพื่อเลือกเรือนชะตาของคุณ</p>
+    </div>
+    <div class="zodiac-grid" id="zgrid"></div>
+
+    <div class="controls">
+      <div class="ctl">
+        <div class="ctl-label">ปีเกิด · เพื่อหานักษัตร</div>
+        <div class="year-input">
+          <input id="yearInput" type="text" inputmode="numeric" placeholder="เช่น 2540" />
+          <button class="era-toggle" id="eraToggle">พ.ศ.</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-label">ช่วงเวลา</div>
+        <div class="period-tabs" id="periodTabs">
+          <button data-p="day" class="active">วันนี้</button>
+          <button data-p="week">สัปดาห์</button>
+          <button data-p="month">เดือน</button>
+          <button data-p="year">ปีนี้</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="reveal-btn" id="revealBtn" disabled>เปิดคำพยากรณ์</button>
+  </section>
+
+  <section id="result">
+    <div class="result-head">
+      <div class="pickline" id="pickline"></div>
+      <h2 id="resName"></h2>
+      <div class="nak" id="resNak"></div>
+      <div class="result-date" id="resDate"></div>
+    </div>
+
+    <div class="planet-row" id="planetRow"></div>
+
+    <div class="verdict">
+      <div class="lead" id="verdictLead"></div>
+      <div class="body" id="verdictBody"></div>
+    </div>
+
+    <div class="aspect-grid" id="aspectGrid"></div>
+
+    <div class="lucky-grid" id="luckyGrid"></div>
+
+    <div class="advice">
+      <div class="a-lab">คำชี้นำประจำช่วง</div>
+      <div class="a-text" id="adviceText"></div>
+    </div>
+
+    <div class="traditions" id="tradRow"></div>
+
+    <button class="recast" id="recastBtn">↺ เปิดดวงใหม่อีกครั้ง</button>
+  </section>
+</main>
+
+<footer>
+  <div class="glyphline">☉ ☽ ♂ ☿ ♃ ♀ ♄</div>
+  นพเคราะห์ · เครื่องมือเพื่อการใคร่ครวญและความบันเทิง ไม่ใช่คำพยากรณ์ที่แน่นอน<br/>
+  โชคชะตาอยู่ในการกระทำของคุณเสมอ
+</footer>
+
+<script>
+/* ===========================================================
+   นพเคราะห์ — เครื่องยนต์ดูดวง
+   ผสาน: ราศีตะวันตก + นพเคราะห์ไทย + ธาตุนักษัตร + เลขศาสตร์
+   =========================================================== */
+
+/* ---------- ข้อมูลราศี ---------- */
+const ZODIAC = [
+  {th:"เมษ",   en:"Aries",       glyph:"♈", date:"21 มี.ค.–19 เม.ย.", element:"ไฟ",  planet:"อังคาร",   color:"#C0392B"},
+  {th:"พฤษภ",  en:"Taurus",      glyph:"♉", date:"20 เม.ย.–20 พ.ค.", element:"ดิน", planet:"ศุกร์",    color:"#27867A"},
+  {th:"เมถุน", en:"Gemini",      glyph:"♊", date:"21 พ.ค.–20 มิ.ย.", element:"ลม",  planet:"พุธ",     color:"#E0B53F"},
+  {th:"กรกฎ",  en:"Cancer",      glyph:"♋", date:"21 มิ.ย.–22 ก.ค.", element:"น้ำ", planet:"จันทร์",   color:"#9DB4C0"},
+  {th:"สิงห์", en:"Leo",         glyph:"♌", date:"23 ก.ค.–22 ส.ค.", element:"ไฟ",  planet:"อาทิตย์",  color:"#E08B2F"},
+  {th:"กันย์", en:"Virgo",       glyph:"♍", date:"23 ส.ค.–22 ก.ย.", element:"ดิน", planet:"พุธ",     color:"#6B8E5A"},
+  {th:"ตุลย์", en:"Libra",       glyph:"♎", date:"23 ก.ย.–22 ต.ค.", element:"ลม",  planet:"ศุกร์",    color:"#C98AB0"},
+  {th:"พิจิก", en:"Scorpio",     glyph:"♏", date:"23 ต.ค.–21 พ.ย.", element:"น้ำ", planet:"อังคาร",   color:"#7A2E2E"},
+  {th:"ธนู",   en:"Sagittarius", glyph:"♐", date:"22 พ.ย.–21 ธ.ค.", element:"ไฟ",  planet:"พฤหัสบดี", color:"#B5572A"},
+  {th:"มังกร", en:"Capricorn",   glyph:"♑", date:"22 ธ.ค.–19 ม.ค.", element:"ดิน", planet:"เสาร์",    color:"#4A4A6A"},
+  {th:"กุมภ์", en:"Aquarius",    glyph:"♒", date:"20 ม.ค.–18 ก.พ.", element:"ลม",  planet:"เสาร์",    color:"#3C8DAE"},
+  {th:"มีน",   en:"Pisces",      glyph:"♓", date:"19 ก.พ.–20 มี.ค.", element:"น้ำ", planet:"พฤหัสบดี", color:"#5B6FB0"},
+];
+
+/* ---------- นักษัตร (ปีนักษัตร) ---------- */
+/* index = (ค.ศ.) % 12 */
+const NAK = {
+  4:{th:"ชวด", animal:"หนู",      en:"Rat",     elem:"น้ำ",  glyph:"🐀"},
+  5:{th:"ฉลู", animal:"วัว",      en:"Ox",      elem:"ดิน",  glyph:"🐂"},
+  6:{th:"ขาล", animal:"เสือ",     en:"Tiger",   elem:"ไม้",  glyph:"🐅"},
+  7:{th:"เถาะ",animal:"กระต่าย",  en:"Rabbit",  elem:"ไม้",  glyph:"🐇"},
+  8:{th:"มะโรง",animal:"งูใหญ่",  en:"Dragon",  elem:"ดิน",  glyph:"🐉"},
+  9:{th:"มะเส็ง",animal:"งูเล็ก", en:"Snake",   elem:"ไฟ",   glyph:"🐍"},
+  10:{th:"มะเมีย",animal:"ม้า",   en:"Horse",   elem:"ไฟ",   glyph:"🐎"},
+  11:{th:"มะแม", animal:"แพะ",    en:"Goat",    elem:"ดิน",  glyph:"🐐"},
+  0:{th:"วอก",  animal:"ลิง",     en:"Monkey",  elem:"ทอง",  glyph:"🐒"},
+  1:{th:"ระกา", animal:"ไก่",     en:"Rooster", elem:"ทอง",  glyph:"🐓"},
+  2:{th:"จอ",   animal:"สุนัข",   en:"Dog",     elem:"ดิน",  glyph:"🐕"},
+  3:{th:"กุน",  animal:"หมู",     en:"Pig",     elem:"น้ำ",  glyph:"🐖"},
+};
+
+const PLANET_NOTE = {
+  "อังคาร":"พลังขับเคลื่อนและความกล้า",
+  "ศุกร์":"เสน่ห์ ความรัก และความสุนทรี",
+  "พุธ":"ปัญญา การสื่อสาร และการค้า",
+  "จันทร์":"อารมณ์ ความรู้สึก และสัญชาตญาณ",
+  "อาทิตย์":"อำนาจบารมีและการเป็นที่ยอมรับ",
+  "พฤหัสบดี":"โชคลาภ ความรู้ และผู้ใหญ่อุปถัมภ์",
+  "เสาร์":"ความมุ่งมั่น อดทน และบทเรียนชีวิต",
+};
+
+/* ---------- คลังคำพยากรณ์ ---------- */
+const LEAD = [
+  "ดาวเคราะห์เคลื่อนเข้าหากันด้วยจังหวะที่เอื้อต่อการเริ่มต้น",
+  "พลังจากเรือนชะตาส่งสัญญาณให้คุณกล้าตัดสินใจมากกว่าที่ผ่านมา",
+  "ห้วงเวลานี้คือการเก็บเกี่ยวจากสิ่งที่หว่านไว้นานแล้ว",
+  "ความเงียบกำลังกลายเป็นพลัง รอเพียงคุณฟังเสียงข้างใน",
+  "ทางที่ดูตีบตันกำลังคลี่คลายอย่างนุ่มนวลกว่าที่คิด",
+  "ดวงดาวเรียกร้องให้คุณปล่อยวางสิ่งที่ถ่วงใจมานาน",
+  "จังหวะของโชคกำลังหมุนกลับมาอยู่ฝ่ายคุณอีกครั้ง",
+  "เป็นช่วงที่บทเรียนเก่าจะให้ผลตอบแทนในรูปแบบใหม่",
+];
+const VBODY = [
+  "สิ่งที่เคยลังเลจะมีคำตอบชัดขึ้น หากคุณยอมเดินเข้าหาแทนการรอ จงไว้ใจสัญชาตญาณแรกที่ผุดขึ้น แต่ตรวจสอบด้วยเหตุผลก่อนลงมือ",
+  "คนรอบตัวจะเป็นกุญแจสำคัญ การเปิดใจรับฟังจะนำพาโอกาสที่มองไม่เห็นมาก่อน อย่ารีบปิดประตูเพียงเพราะเรื่องเล็กน้อย",
+  "พลังงานของช่วงนี้หนุนเรื่องการลงหลักปักฐานและการสะสมระยะยาว ความอดทนวันนี้คือทุนของวันข้างหน้า",
+  "มีบางอย่างที่ต้องสะสาง อย่าผัดวันต่อไป เพราะยิ่งช้า ยิ่งกลายเป็นภาระทางใจ เมื่อจัดการแล้วจะรู้สึกเบาอย่างน่าประหลาด",
+  "ความคิดสร้างสรรค์พลุ่งพล่านเป็นพิเศษ จดบันทึกทุกประกายไอเดียไว้ เพราะหนึ่งในนั้นอาจเปลี่ยนทิศทางได้จริง",
+  "ระวังการใช้คำพูด เพราะดาวสื่อสารกำลังแปรปรวน สิ่งที่ตั้งใจดีอาจถูกตีความผิด ค่อยๆ อธิบายจะได้ผลกว่าการรีบ",
+];
+
+const ASPECT_TEXT = {
+  love:[
+    "หัวใจเปิดรับความอบอุ่น คนโสดมีเกณฑ์พบคนที่คลื่นตรงกัน คนมีคู่จะเข้าใจกันลึกขึ้นหากกล้าพูดความจริง",
+    "อย่าเก็บงำความรู้สึก ความสัมพันธ์ที่จริงใจเริ่มจากการยอมเปราะบาง ช่วงนี้เหมาะกับการง้อและการให้อภัย",
+    "เสน่ห์เปล่งประกาย แต่ระวังความเข้าใจผิดเล็กๆ ที่บานปลาย ฟังให้จบก่อนตอบจะรักษาใจกันได้",
+    "ความรักต้องการพื้นที่หายใจ การให้อิสระคือของขวัญที่ทรงพลังที่สุดในห้วงนี้",
+  ],
+  work:[
+    "งานที่ค้างคาจะขยับ มีผู้ใหญ่หรือคนมีอำนาจยื่นมือช่วย จงนำเสนอตัวเองอย่างมั่นใจแต่ไม่ก้าวร้าว",
+    "เป็นจังหวะของการเรียนรู้สิ่งใหม่ ทักษะที่ฝึกตอนนี้จะกลายเป็นข้อได้เปรียบในไม่ช้า",
+    "ระวังความขัดแย้งกับเพื่อนร่วมงาน เลือกสมรภูมิให้เป็น บางเรื่องชนะด้วยการนิ่งดีกว่าโต้",
+    "โอกาสเปลี่ยนงานหรือขยับตำแหน่งเปิดกว้าง ใคร่ครวญให้รอบคอบก่อนรับปาก สิ่งที่มั่นคงสำคัญกว่าสิ่งที่หวือหวา",
+  ],
+  money:[
+    "การเงินไหลเวียนดีขึ้น มีรายรับทางอ้อมหรือลาภลอยเล็กน้อย แต่อย่าประมาทกับรายจ่ายฟุ่มเฟือย",
+    "เป็นช่วงเก็บออมมากกว่าใช้จ่าย วางแผนระยะยาวจะให้ผลงดงาม หลีกเลี่ยงการค้ำประกันให้ผู้อื่น",
+    "ระวังการลงทุนตามกระแสโดยไม่ศึกษา ฟังหลายฝ่ายก่อนตัดสิน ความรอบคอบคือเกราะป้องกันที่ดีที่สุด",
+    "มีเกณฑ์ได้คืนสิ่งที่เคยเสียไป ทั้งทรัพย์และโอกาส จงเปิดตามองช่องทางที่เคยมองข้าม",
+  ],
+  health:[
+    "ร่างกายต้องการการพักผ่อนมากกว่าที่ให้ ฟังสัญญาณความเหนื่อยล้า อย่าฝืนจนเกินพอดี",
+    "พลังกายใจสมดุล เหมาะเริ่มกิจวัตรดูแลตัวเองใหม่ การเคลื่อนไหวเบาๆ จะคืนความสดชื่น",
+    "ระวังความเครียดสะสมที่แปลงเป็นอาการทางกาย หาเวลาอยู่กับธรรมชาติหรือความเงียบจะช่วยได้",
+    "เป็นช่วงฟื้นตัวที่ดี สิ่งที่เคยกังวลเรื่องสุขภาพมีแนวโน้มคลี่คลาย ขอเพียงสม่ำเสมอ",
+  ],
+};
+
+const ADVICE = [
+  "จงเริ่มจากสิ่งเล็กที่ทำได้จริงในวันนี้ แล้วปล่อยให้จังหวะพาไป",
+  "ความใจเย็นจะเปิดประตูที่ความรีบร้อนปิดไว้",
+  "พูดความจริงด้วยความเมตตา แล้วความสัมพันธ์จะคืนความไว้ใจ",
+  "อย่าวัดคุณค่าตัวเองด้วยสายตาผู้อื่น ดาวของคุณส่องด้วยแสงตัวเอง",
+  "สิ่งที่ปล่อยวางได้วันนี้ คือพื้นที่ว่างให้สิ่งดีเข้ามาพรุ่งนี้",
+  "ก่อนตัดสินใจครั้งใหญ่ ให้หลับสักหนึ่งคืน คำตอบมักชัดขึ้นยามเช้า",
+  "ความกตัญญูต่อสิ่งเล็กน้อย คือแม่เหล็กของโชคลาภ",
+];
+
+const COLORS = [
+  {n:"แดงชาด",h:"#B03A2E"},{n:"ทองคำ",h:"#D8B863"},{n:"เขียวมรกต",h:"#1E8064"},
+  {n:"คราม",h:"#2C3E70"},{n:"ม่วงอมชมพู",h:"#8E44AD"},{n:"ส้มอิฐ",h:"#C0622B"},
+  {n:"ฟ้าหม่น",h:"#5DADE2"},{n:"ขาวมุก",h:"#EDEAE0"},{n:"ดำเงา",h:"#2B2B2B"},
+  {n:"ชมพูกุหลาบ",h:"#D98BA5"},{n:"เหลืองทอง",h:"#E0B53F"},{n:"เทอร์ควอยซ์",h:"#1ABC9C"},
+];
+const DIRECTIONS = ["ทิศเหนือ","ทิศตะวันออก","ทิศตะวันออกเฉียงเหนือ","ทิศใต้","ทิศตะวันตก","ทิศตะวันออกเฉียงใต้","ทิศตะวันตกเฉียงเหนือ","ทิศตะวันตกเฉียงใต้"];
+const GEMS = ["ทับทิม","ไพลิน","มรกต","บุษราคัม","หยก","อะความารีน","โอปอล","โกเมน","มุก","เพทาย"];
+const DAY_TH = ["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
+
+const TRADITIONS = ["โหราศาสตร์ตะวันตก","นพเคราะห์ไทย","ธาตุนักษัตร","เลขศาสตร์","ห้าธาตุจีน"];
+
+/* ---------- Seeded RNG (mulberry32) ---------- */
+function seededRng(seed){
+  let t = seed >>> 0;
+  return function(){
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+const pick = (rng,arr)=>arr[Math.floor(rng()*arr.length)];
+const score = (rng)=>1+Math.floor(rng()*5); // 1-5
+
+/* ---------- State ---------- */
+let state = { zodiac:null, period:"day", era:"be", year:null };
+
+/* ===========================================================
+   STARFIELD
+   =========================================================== */
+(function star(){
+  const c=document.getElementById("starfield"),x=c.getContext("2d");
+  let w,h,stars,shoot=[];
+  function size(){w=c.width=innerWidth;h=c.height=innerHeight;
+    const n=Math.min(180,Math.floor(w*h/9000));
+    stars=Array.from({length:n},()=>({x:Math.random()*w,y:Math.random()*h,
+      r:Math.random()*1.3+.2,a:Math.random(),tw:Math.random()*.02+.004,
+      gold:Math.random()<.12}));}
+  size();addEventListener("resize",size);
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  function loop(){
+    x.clearRect(0,0,w,h);
+    for(const s of stars){
+      if(!reduce){s.a+=s.tw;if(s.a>1||s.a<.1)s.tw*=-1;}
+      x.beginPath();x.arc(s.x,s.y,s.r,0,7);
+      x.fillStyle=s.gold?`rgba(216,184,99,${s.a*.9})`:`rgba(239,231,210,${s.a*.7})`;
+      x.fill();
+    }
+    if(!reduce){
+      if(Math.random()<.004)shoot.push({x:Math.random()*w,y:Math.random()*h*.4,len:0,v:6+Math.random()*4});
+      for(let i=shoot.length-1;i>=0;i--){const sh=shoot[i];sh.len+=sh.v;sh.x+=sh.v;sh.y+=sh.v*.4;
+        const g=x.createLinearGradient(sh.x,sh.y,sh.x-sh.len,sh.y-sh.len*.4);
+        g.addColorStop(0,"rgba(216,184,99,.8)");g.addColorStop(1,"rgba(216,184,99,0)");
+        x.strokeStyle=g;x.lineWidth=1.4;x.beginPath();x.moveTo(sh.x,sh.y);x.lineTo(sh.x-sh.len,sh.y-sh.len*.4);x.stroke();
+        if(sh.len>180)shoot.splice(i,1);}
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ===========================================================
+   ASTROLABE (SVG)
+   =========================================================== */
+(function astrolabe(){
+  const stage=document.getElementById("astrolabe");
+  const NS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox","-200 -200 400 400");
+
+  function circle(r,stroke,sw,dash){
+    const c=document.createElementNS(NS,"circle");
+    c.setAttribute("r",r);c.setAttribute("fill","none");
+    c.setAttribute("stroke",stroke);c.setAttribute("stroke-width",sw);
+    if(dash)c.setAttribute("stroke-dasharray",dash);
+    return c;
+  }
+  // rings
+  svg.appendChild(circle(190,"rgba(216,184,99,.16)",1));
+  svg.appendChild(circle(150,"rgba(216,184,99,.4)",1,"1 6"));
+  svg.appendChild(circle(110,"rgba(216,184,99,.22)",1));
+  svg.appendChild(circle(70,"rgba(122,46,46,.5)",1,"2 4"));
+
+  // outer ring: zodiac glyphs
+  const gOuter=document.createElementNS(NS,"g");gOuter.setAttribute("class","ring-outer");
+  ZODIAC.forEach((z,i)=>{
+    const ang=(i/12)*Math.PI*2 - Math.PI/2;
+    const r=170;
+    const t=document.createElementNS(NS,"text");
+    t.setAttribute("x",Math.cos(ang)*r);t.setAttribute("y",Math.sin(ang)*r);
+    t.setAttribute("text-anchor","middle");t.setAttribute("dominant-baseline","central");
+    t.setAttribute("font-size","18");t.setAttribute("class","glyph");
+    t.textContent=z.glyph;
+    gOuter.appendChild(t);
+    // tick
+    const tk=document.createElementNS(NS,"line");
+    tk.setAttribute("x1",Math.cos(ang)*150);tk.setAttribute("y1",Math.sin(ang)*150);
+    tk.setAttribute("x2",Math.cos(ang)*158);tk.setAttribute("y2",Math.sin(ang)*158);
+    tk.setAttribute("stroke","rgba(216,184,99,.5)");tk.setAttribute("stroke-width","1");
+    gOuter.appendChild(tk);
+  });
+  svg.appendChild(gOuter);
+
+  // mid ring: nakshatra animals
+  const gMid=document.createElementNS(NS,"g");gMid.setAttribute("class","ring-mid");
+  Object.values(NAK).forEach((nk,i)=>{
+    const ang=(i/12)*Math.PI*2 - Math.PI/2;
+    const r=128;
+    const t=document.createElementNS(NS,"text");
+    t.setAttribute("x",Math.cos(ang)*r);t.setAttribute("y",Math.sin(ang)*r);
+    t.setAttribute("text-anchor","middle");t.setAttribute("dominant-baseline","central");
+    t.setAttribute("font-size","9");t.setAttribute("class","glyph-th");
+    t.setAttribute("fill","rgba(239,231,210,.55)");
+    t.textContent=nk.th;
+    gMid.appendChild(t);
+  });
+  svg.appendChild(gMid);
+
+  // inner rotating sun rays
+  const gInner=document.createElementNS(NS,"g");gInner.setAttribute("class","ring-inner");
+  for(let i=0;i<24;i++){
+    const ang=(i/24)*Math.PI*2;
+    const l=document.createElementNS(NS,"line");
+    l.setAttribute("x1",Math.cos(ang)*40);l.setAttribute("y1",Math.sin(ang)*40);
+    l.setAttribute("x2",Math.cos(ang)*(i%2?62:54));l.setAttribute("y2",Math.sin(ang)*(i%2?62:54));
+    l.setAttribute("stroke","rgba(216,184,99,.3)");l.setAttribute("stroke-width","1");
+    gInner.appendChild(l);
+  }
+  svg.appendChild(gInner);
+
+  // center eye / sun
+  const cg=document.createElementNS(NS,"g");
+  const sun=document.createElementNS(NS,"circle");
+  sun.setAttribute("r","26");sun.setAttribute("fill","url(#sg)");
+  const defs=document.createElementNS(NS,"defs");
+  defs.innerHTML='<radialGradient id="sg"><stop offset="0%" stop-color="#E7D29A"/><stop offset="70%" stop-color="#D8B863"/><stop offset="100%" stop-color="#8C7536"/></radialGradient>';
+  svg.appendChild(defs);
+  cg.appendChild(sun);
+  const star=document.createElementNS(NS,"text");
+  star.setAttribute("text-anchor","middle");star.setAttribute("dominant-baseline","central");
+  star.setAttribute("font-size","22");star.setAttribute("fill","#160F2E");star.textContent="✶";
+  cg.appendChild(star);
+  svg.appendChild(cg);
+
+  stage.appendChild(svg);
+})();
+
+/* ===========================================================
+   UI BUILD
+   =========================================================== */
+const zgrid=document.getElementById("zgrid");
+ZODIAC.forEach((z,i)=>{
+  const d=document.createElement("button");
+  d.className="z-card";d.type="button";
+  d.setAttribute("aria-label",`ราศี${z.th} ${z.en}`);
+  d.innerHTML=`<div class="z-glyph">${z.glyph}</div>
+    <div class="z-th">${z.th}</div>
+    <div class="z-en">${z.en}</div>
+    <div class="z-date">${z.date}</div>`;
+  d.addEventListener("click",()=>{
+    document.querySelectorAll(".z-card").forEach(c=>c.classList.remove("active"));
+    d.classList.add("active");
+    state.zodiac=i;
+    checkReady();
+  });
+  zgrid.appendChild(d);
+});
+
+const periodTabs=document.getElementById("periodTabs");
+periodTabs.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  periodTabs.querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");state.period=b.dataset.p;
+});
+
+const eraToggle=document.getElementById("eraToggle");
+eraToggle.addEventListener("click",()=>{
+  state.era = state.era==="be" ? "ce" : "be";
+  eraToggle.textContent = state.era==="be" ? "พ.ศ." : "ค.ศ.";
+  document.getElementById("yearInput").placeholder = state.era==="be" ? "เช่น 2540" : "เช่น 1997";
+});
+
+document.getElementById("yearInput").addEventListener("input",e=>{
+  const v=parseInt(e.target.value.replace(/\D/g,""),10);
+  state.year=isNaN(v)?null:v;
+});
+
+const revealBtn=document.getElementById("revealBtn");
+function checkReady(){ revealBtn.disabled = state.zodiac===null; }
+
+revealBtn.addEventListener("click",render);
+document.getElementById("recastBtn").addEventListener("click",()=>{
+  document.getElementById("choose").scrollIntoView({behavior:"smooth"});
+});
+
+/* ---------- helpers ---------- */
+function nakFromYear(y){
+  if(!y) return null;
+  // toggle เป็นตัวกำหนดหลัก: be = พ.ศ., ce = ค.ศ.
+  let ce = state.era==="be" ? y-543 : y;
+  // กันพลาด: ถ้าผลลัพธ์ดูเป็นปีไทยอยู่ (>2300) ให้แปลงซ้ำ
+  if(ce>2300) ce -= 543;
+  if(ce<1) return null;
+  const idx=((ce%12)+12)%12;
+  return {...NAK[idx], ce};
+}
+function starStr(n){
+  let s="";for(let i=0;i<5;i++)s+= i<n ? "★" : '<span class="dim">★</span>';
+  return s;
+}
+function periodLabel(p){return {day:"วันนี้",week:"สัปดาห์นี้",month:"เดือนนี้",year:"ปีนี้"}[p];}
+function periodSeedKey(p,now){
+  if(p==="day")  return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  if(p==="week"){const wk=Math.floor((now-new Date(now.getFullYear(),0,1))/6048e5);return `${now.getFullYear()}-w${wk}`;}
+  if(p==="month")return `${now.getFullYear()}-m${now.getMonth()}`;
+  return `${now.getFullYear()}`;
+}
+
+/* ===========================================================
+   RENDER RESULT
+   =========================================================== */
+function render(){
+  const z=ZODIAC[state.zodiac];
+  const now=new Date();
+  const seedKey=`${z.en}|${state.period}|${periodSeedKey(state.period,now)}|${state.year||0}`;
+  const rng=seededRng(hashStr(seedKey));
+
+  const nak=nakFromYear(state.year);
+
+  // head
+  document.getElementById("pickline").textContent=`คำพยากรณ์ประจำ${periodLabel(state.period)}`;
+  document.getElementById("resName").innerHTML=`${z.glyph} ราศี${z.th} <span style="font-family:Cormorant;font-style:italic;color:var(--gold);font-size:.6em">${z.en}</span>`;
+  document.getElementById("resNak").textContent = nak
+    ? `ปีนักษัตร: ${nak.th} (${nak.animal}) ${nak.glyph} · ธาตุ${nak.elem} · ปีเกิด ค.ศ. ${nak.ce}`
+    : "ใส่ปีเกิดเพื่อเสริมการอ่านด้วยนักษัตร";
+  const opt={year:"numeric",month:"long",day:state.period==="day"?"numeric":undefined};
+  document.getElementById("resDate").textContent = now.toLocaleDateString("th-TH",
+    state.period==="day"?{weekday:"long",year:"numeric",month:"long",day:"numeric"}
+    :state.period==="month"?{year:"numeric",month:"long"}
+    :{year:"numeric",month:"long",day:"numeric"});
+
+  // planet chips
+  const dayPlanet=DAY_TH[now.getDay()];
+  document.getElementById("planetRow").innerHTML=`
+    <div class="planet-chip">ดาวเจ้าเรือน <b>${z.planet}</b> · ${PLANET_NOTE[z.planet]}</div>
+    <div class="planet-chip">ธาตุประจำราศี <b>${z.element}</b></div>
+    ${nak?`<div class="planet-chip">ธาตุนักษัตร <b>${nak.elem}</b></div>`:""}
+    <div class="planet-chip">พลังดาวประจำวัน${dayPlanet} <b>กำลังส่องถึงเรือนชะตา</b></div>`;
+
+  // verdict
+  document.getElementById("verdictLead").textContent=pick(rng,LEAD);
+  document.getElementById("verdictBody").textContent=pick(rng,VBODY);
+
+  // aspects
+  const aspects=[
+    {key:"love", name:"ความรัก", icon:"♥"},
+    {key:"work", name:"การงาน", icon:"☿"},
+    {key:"money",name:"การเงิน", icon:"♦"},
+    {key:"health",name:"สุขภาพ", icon:"✚"},
+  ];
+  const ag=document.getElementById("aspectGrid");ag.innerHTML="";
+  const bars=[];
+  aspects.forEach(a=>{
+    const sc=score(rng);
+    const txt=pick(rng,ASPECT_TEXT[a.key]);
+    const el=document.createElement("div");el.className="aspect";
+    el.innerHTML=`<div class="aspect-top">
+        <span class="aspect-name">${a.name}</span>
+        <span class="aspect-icon" style="color:var(--gold)">${a.icon}</span>
+      </div>
+      <div class="stars">${starStr(sc)}</div>
+      <div class="bar"><i data-w="${sc*20}"></i></div>
+      <p>${txt}</p>`;
+    ag.appendChild(el);
+  });
+
+  // lucky
+  const luckyColor=pick(rng,COLORS);
+  const luckyNum=1+Math.floor(rng()*9);
+  const luckyNum2=10+Math.floor(rng()*89);
+  const dir=pick(rng,DIRECTIONS);
+  const gem=pick(rng,GEMS);
+  document.getElementById("luckyGrid").innerHTML=`
+    <div class="lucky"><div class="l-lab">เลขมงคล</div><div class="l-val">${luckyNum} · ${luckyNum2}</div><div class="l-sub">นำติดตัวหรือใช้ตัดสินใจ</div></div>
+    <div class="lucky"><div class="l-lab">สีเสริมดวง</div><div class="l-val" style="font-size:1.1rem">${luckyColor.n}</div><div class="swatch" style="background:${luckyColor.h}"></div></div>
+    <div class="lucky"><div class="l-lab">ทิศมงคล</div><div class="l-val" style="font-size:1.15rem">${dir}</div><div class="l-sub">หันหน้าทำสิ่งสำคัญ</div></div>
+    <div class="lucky"><div class="l-lab">อัญมณีหนุนดวง</div><div class="l-val" style="font-size:1.15rem">${gem}</div><div class="l-sub">พกพาเพื่อเสริมพลัง</div></div>`;
+
+  // advice
+  document.getElementById("adviceText").textContent=`“${pick(rng,ADVICE)}”`;
+
+  // traditions
+  document.getElementById("tradRow").innerHTML=
+    `<span class="trad">อ้างอิงจาก:</span>`+
+    TRADITIONS.map(t=>`<span class="trad"><b>✦</b> ${t}</span>`).join("");
+
+  // show
+  const res=document.getElementById("result");
+  res.classList.add("show");
+  setTimeout(()=>res.scrollIntoView({behavior:"smooth"}),60);
+  // animate bars after visible
+  setTimeout(()=>{document.querySelectorAll(".bar i").forEach(b=>b.style.width=b.dataset.w+"%");},420);
+}
+
+</script>
+</body>
+</html>
